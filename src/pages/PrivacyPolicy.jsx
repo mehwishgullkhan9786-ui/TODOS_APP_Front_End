@@ -19,7 +19,7 @@ const PrivacyPolicy = () => {
   return (
     <Box sx={{ minHeight: "100vh", background: meshGradient, py: 12 }}>
       <Container maxWidth="md">
-        {/* Header Section */}
+      
         <Box sx={{ textAlign: "center", mb: 8 }}>
           <Box
             sx={{
@@ -54,7 +54,7 @@ const PrivacyPolicy = () => {
           </Typography>
         </Box>
 
-        {/* Content Section */}
+      
         <Paper
           elevation={0}
           sx={{

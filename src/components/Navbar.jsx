@@ -282,7 +282,7 @@ function Navbar() {
             TODO FLOW
           </Typography>
 
-          {/* Desktop Navigation Links */}
+        
           <Box
             sx={{
               flexGrow: 1,
@@ -362,7 +362,7 @@ function Navbar() {
             )}
           </Box>
 
-          {/* Mobile Menu Button + Drawer */}
+      
           <Box sx={{ display: { xs: "flex", md: "none" }, mr: 1 }}>
             <IconButton
               size="large"
@@ -384,7 +384,7 @@ function Navbar() {
             </Drawer>
           </Box>
 
-          {/* Right Section: Search & User Account */}
+          
           {isAuthenticated ? (
             <>
               <Search

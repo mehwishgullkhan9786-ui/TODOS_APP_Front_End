@@ -127,7 +127,7 @@ function Footer() {
                     fontWeight: 500,
                     maxWidth: "340px",
                     fontSize: "1rem",
-                    margin: "0 auto", // Center the text block
+                    margin: "0 auto", 
                   }}
                 >
                   Experience the pinnacle of task management with our intelligent flow system. Built for speed, designed for clarity.
@@ -170,7 +170,7 @@ function Footer() {
                   variant="outlined"
                   size="small"
                   sx={{
-                    mb: 2, // Added margin bottom
+                    mb: 2,
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "rgba(255,255,255,0.06)",
                       borderRadius: "16px",
