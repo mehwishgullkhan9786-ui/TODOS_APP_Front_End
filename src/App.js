@@ -1,7 +1,7 @@
 import './App.css';
 import ResponsiveAppBar from './components/Navbar';
 import Footer from './components/Footer';
-import { Box, Toolbar } from '@mui/material';
+import { Box } from '@mui/material';
 import LandingPage from './pages/Home';
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from './pages/Login';
@@ -11,6 +11,12 @@ import StyledUsersTable from './components/UersManagement/UsersTable';
 import RolesTable from './pages/Roles';
 import Permission from './pages/Permission';
 import Tasks from './pages/Tasks';
+import AboutUs from './pages/AboutUs';
+import ContactUs from './pages/ContactUs';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfUse from './pages/TermsOfUse';
+import ProfilePage from './pages/ProfilePage';
+import AccountPage from './pages/AccountPage';
 
 
 function App() {
@@ -31,27 +37,27 @@ function App() {
               bgcolor: '#f4f6f8'
             }}
           >
-            {/* Navbar ke niche spacing hata di gayi hai */}
 
 
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/contact" element={<ContactUs />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsOfUse />} />
 
-              {/* DASHBOARD NESTED ROUTES START */}
+              
               <Route path="/dashboard" element={<Dashboard />}>
-                {/* Ye routes ab Dashboard ke Outlet mein render honge.
-                   Note: Dashboard ke andar ke links in paths se match karne chahiyen.
-                */}
                 {/* <Route path="UserManagment" element={<UserManagment/>} /> */}
                 <Route path="roles" element={<RolesTable />} />
                 <Route path="permission" element={<Permission />} />
                 <Route path="users-table" element={<StyledUsersTable/>} />
                 <Route path="tasks" element={<Tasks />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="account" element={<AccountPage />} />
               </Route>
-              {/* DASHBOARD NESTED ROUTES END */}
-
             </Routes>
 
             <Box sx={{ mt: 'auto' }}>

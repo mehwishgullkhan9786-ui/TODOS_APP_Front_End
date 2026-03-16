@@ -1,9 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import SidebarComponent from "../components/SideBar";
-import { Link, Outlet, useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Grid,
@@ -22,116 +19,137 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Fade,
+  alpha,
+  useTheme,
+  useMediaQuery,
+  Avatar,
 } from "@mui/material";
 import {
   CheckCircle,
   RadioButtonUnchecked,
   ChevronLeft,
   ChevronRight,
+  TrendingUp,
+  PendingActions,
+  History,
+  PriorityHigh,
+  Add as AddIcon,
+  Group as GroupIcon,
+  Security as SecurityIcon,
+  Menu as MenuIcon,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
+import axios from "axios";
 
-const mainGradient = "linear-gradient(135deg, #000851 0%, #1cb5e0 100%)";
-
-const StatCard = styled(Card)(({ bgcolor }) => ({
-  backgroundColor: bgcolor,
-  color: "#fff",
-  borderRadius: "16px",
-  boxShadow: "0 10px 20px rgba(0,0,0,0.08)",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: "20px",
-  transition: "all 0.3s ease",
+const GlassPaper = styled(Paper)(({ theme }) => ({
+  background: "rgba(255, 255, 255, 0.8)",
+  backdropFilter: "blur(12px)",
+  borderRadius: "24px",
+  border: "1px solid rgba(255, 255, 255, 0.3)",
+  boxShadow: "0 8px 32px rgba(0, 8, 81, 0.05)",
+  padding: theme.spacing(2, 2),
+  [theme.breakpoints.up("md")]: {
+    padding: theme.spacing(3),
+  },
+  transition: "transform 0.3s ease, box-shadow 0.3s ease",
   "&:hover": {
-    transform: "translateY(-5px)",
-    boxShadow: "0 16px 24px rgba(0,0,0,0.12)",
+    boxShadow: "0 12px 48px rgba(0, 8, 81, 0.1)",
   },
 }));
 
-const SectionHeader = styled(Box)({
+const StatCard = styled(Card)(({ gradient }) => ({
+  background: gradient,
+  color: "#fff",
+  borderRadius: "24px",
+  padding: "24px",
+  height: "100%",
   display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "16px",
-  borderBottom: "1px solid #e0e0e0",
-  paddingBottom: "8px",
-});
-
-const TaskItem = styled(ListItem)({
-  borderRadius: "12px",
-  transition: "all 0.2s",
-  "&:hover": { backgroundColor: "#f9faff" },
-  paddingTop: "12px",
-  paddingBottom: "12px",
-  display: "flex",
-  alignItems: "center",
-  gap: "16px",
-});
+  flexDirection: "column",
+  position: "relative",
+  overflow: "hidden",
+  transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+  "&:hover": {
+    transform: "translateY(-8px)",
+    boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+  },
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    top: "-10%",
+    right: "-10%",
+    width: "120px",
+    height: "120px",
+    background: "rgba(255,255,255,0.1)",
+    borderRadius: "50%",
+  },
+}));
 
 const CalendarDay = styled(Box)(({ isToday, isSelected }) => ({
-  padding: "12px",
-  borderRadius: "50%",
+  width: "36px",
+  height: "36px",
+  margin: "auto",
+  borderRadius: "12px",
   cursor: "pointer",
   fontSize: "0.85rem",
   fontWeight: 600,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  transition: "all 0.2s",
-  backgroundColor: isSelected ? "#2ecc71" : isToday ? "#3498db" : "transparent",
-  color: isSelected || isToday ? "#fff" : "#2c3e50",
-  "&:hover": { backgroundColor: isSelected ? "#2ecc71" : "#e6f0ff" },
+  transition: "all 0.2s ease",
+  backgroundColor: isSelected
+    ? "#1CB5E0"
+    : isToday
+      ? alpha("#1CB5E0", 0.1)
+      : "transparent",
+  color: isSelected ? "#fff" : isToday ? "#1CB5E0" : "#2c3e50",
+  border: isToday && !isSelected ? "1px solid #1CB5E0" : "none",
+  "&:hover": {
+    backgroundColor: isSelected ? "#1CB5E0" : alpha("#1CB5E0", 0.05),
+    transform: "scale(1.1)",
+  },
 }));
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
+  const isLargeDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    const checkToken = () => {
+    const fetchTasks = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Session Expire! Kindly Login First...");
         navigate("/login");
       }
+      try {
+        const res = await axios.get("http://localhost:5000/tasks", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTasks(res.data.map((t) => ({ ...t, id: t._id })));
+      } catch (err) {
+        console.error(err);
+      }
     };
-
-    checkToken();
-  }, [navigate]);
+    fetchTasks();
+  }, []);
 
   const location = useLocation();
-  const [tasks, setTasks] = useState([
-    { id: 1, text: "Finish project report", completed: true },
-    { id: 2, text: "Meeting with client", completed: true },
-    { id: 3, text: "Update website content", completed: true },
-    { id: 4, text: "Gym Session", completed: false },
-    { id: 5, text: "Plan weekend trip", completed: false },
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const permissions = JSON.parse(localStorage.getItem("permissions") || "{}");
   const [openDialog, setOpenDialog] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [taskInput, setTaskInput] = useState("");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-  const recurringTasks = ["Daily Standup", "Weekly Report", "Monthly Backup"];
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleDrawerOpen = () => setDrawerOpen(true);
-  const handleDrawerClose = () => setDrawerOpen(false);
+  const isDashboardHome = location.pathname.toLowerCase() === "/dashboard";
 
-  const isDashboardHome =
-    location.pathname.toLowerCase() === "/dashboard" ||
-    location.pathname === "/";
-
-  const handlePrevMonth = () =>
-    setCurrentDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1),
-    );
-  const handleNextMonth = () =>
-    setCurrentDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1),
-    );
-
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
   const generateCalendar = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -150,321 +168,600 @@ export default function Dashboard() {
   });
   const today = new Date();
 
-  const handleDateClick = (day) => {
-    if (!day) return;
-    setSelectedDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth(), day),
-    );
+  const handleToggleTask = async (id) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await axios.put(
+        `http://localhost:5000/tasks/${id}`,
+        { completed: !task.completed },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setTasks((prevTasks) =>
+        prevTasks.map((t) =>
+          t.id === id ? { ...res.data, id: res.data._id } : t,
+        ),
+      );
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Error updating task: " + (err.response?.data?.message || err.message),
+      );
+    }
   };
 
-  const handleToggleTask = (id) =>
-    setTasks(
-      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-    );
-  const handleDeleteTask = (id) => setTasks(tasks.filter((t) => t.id !== id));
+  const handleDeleteTask = async (id) => {
+    const token = localStorage.getItem("token");
+    try {
+      await axios.delete(`http://localhost:5000/tasks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTasks((prevTasks) => prevTasks.filter((t) => t.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Error deleting task: " + (err.response?.data?.message || err.message),
+      );
+    }
+  };
+
   const handleOpenAdd = () => {
     setEditingTask(null);
     setTaskInput("");
     setOpenDialog(true);
   };
-  const handleOpenEdit = (task) => {
-    setEditingTask(task);
-    setTaskInput(task.text);
-    setOpenDialog(true);
-  };
-  const handleCloseDialog = () => setOpenDialog(false);
-  const handleSaveTask = () => {
+
+  const handleSaveTask = async () => {
     if (!taskInput.trim()) return;
-    if (editingTask)
-      setTasks(
-        tasks.map((t) =>
-          t.id === editingTask.id ? { ...t, text: taskInput } : t,
-        ),
+
+    const token = localStorage.getItem("token");
+    try {
+      if (editingTask) {
+        const res = await axios.put(
+          `http://localhost:5000/tasks/${editingTask.id}`,
+          { text: taskInput },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        setTasks((prevTasks) =>
+          prevTasks.map((t) =>
+            t.id === editingTask.id ? { ...res.data, id: res.data._id } : t,
+          ),
+        );
+      } else {
+        const res = await axios.post(
+          "http://localhost:5000/tasks",
+          { text: taskInput },
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        console.log("Task added successfully:", res.data);
+        setTasks((prevTasks) => [
+          ...prevTasks,
+          { ...res.data, id: res.data._id },
+        ]);
+      }
+      setTaskInput("");
+      setOpenDialog(false);
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Error saving task: " + (err.response?.data?.message || err.message),
       );
-    else
-      setTasks([
-        ...tasks,
-        { id: Date.now(), text: taskInput, completed: false },
-      ]);
-    handleCloseDialog();
+    }
   };
 
-  const total = tasks.length;
-  const completed = tasks.filter((t) => t.completed).length;
-  const pending = total - completed;
-
-  const dynamicStats = [
-    { label: "Total Tasks", value: total, color: "#3498db" },
-    { label: "Completed", value: completed, color: "#2ecc71" },
-    { label: "Pending", value: pending, color: "#f39c12" },
-    { label: "Overdue", value: 2, color: "#e74c3c" },
+  const stats = [
+    {
+      label: "Total Tasks",
+      value: tasks.length,
+      icon: <TrendingUp />,
+      gradient: "linear-gradient(135deg, #1CB5E0 0%, #000851 100%)",
+    },
+    {
+      label: "Completed",
+      value: tasks.filter((t) => t.completed).length,
+      icon: <CheckCircle />,
+      gradient: "linear-gradient(135deg, #00B4DB 0%, #0083B0 100%)",
+    },
+    {
+      label: "Pending",
+      value: tasks.filter((t) => !t.completed).length,
+      icon: <PendingActions />,
+      gradient: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)",
+    },
+    {
+      label: "Archived",
+      value: 12,
+      icon: <History />,
+      gradient: "linear-gradient(135deg, #373B44 0%, #4286f4 100%)",
+    },
   ];
 
   return (
-    <Box sx={{ display: "flex", bgcolor: "#f4f6f8", minHeight: "100vh", p: 3 }}>
+    <Box
+      sx={{
+        display: "flex",
+        bgcolor: "#f8faff",
+        minHeight: "100vh",
+        overflowX: "auto",
+      }}
+    >
       <SidebarComponent
         open={drawerOpen}
-        handleDrawerOpen={handleDrawerOpen}
-        handleDrawerClose={handleDrawerClose}
+        handleDrawerOpen={toggleDrawer}
+        handleDrawerClose={toggleDrawer}
       />
 
       <Box
+        component="main"
         sx={{
           flexGrow: 1,
-          pl: { md: drawerOpen ? "240px" : "80px" },
-          transition: "0.3s",
-          pl: { md: "240px" },
+          minHeight: "100vh",
+          background: "transparent",
+          pt: "80px", // Account for fixed navbar height
+          // Use constant margins/widths per breakpoint so content doesn't shift
+          marginLeft: { xs: "64px", sm: "64px", md: "200px" },
+          width: {
+            xs: "calc(100% - 64px)",
+            sm: "calc(100% - 64px)",
+            md: "calc(100% - 200px)",
+          },
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          padding: { xs: 2, sm: 3, md: 4 },
         }}
       >
-        {isDashboardHome ? (
-          <>
-            {/* Stats */}
-            <Grid container spacing={3} sx={{ mb: 5 }}>
-              {dynamicStats.map((stat, index) => (
-                <Grid item xs={12} sm={6} md={3} key={index}>
-                  <StatCard bgcolor={stat.color}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <CheckCircle sx={{ fontSize: 30, opacity: 0.85 }} />
-                      <Typography variant="h3" fontWeight="800">
-                        {stat.value}
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight="700"
-                      sx={{ opacity: 0.9 }}
-                    >
-                      {stat.label.toUpperCase()}
-                    </Typography>
-                  </StatCard>
-                </Grid>
-              ))}
-            </Grid>
-
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={8}>
-                <Paper
+        <Box sx={{ width: "100%", maxWidth: "1200px" }}>
+          {isDashboardHome ? (
+            <Fade in timeout={800}>
+              <Box>
+                <Box
                   sx={{
-                    p: 4,
-                    borderRadius: 16,
-                    mb: 4,
-                    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+                    mb: { xs: 3, md: 6 },
+                    textAlign: "center",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    position: "relative",
                   }}
                 >
-                  <SectionHeader>
-                    <Typography variant="h6" fontWeight="800" color="#000851">
-                      Task List
-                    </Typography>
-                    <Button
-                      onClick={handleOpenAdd}
-                      variant="contained"
-                      sx={{
-                        background: mainGradient,
-                        textTransform: "none",
-                        borderRadius: "10px",
-                        px: 3,
-                      }}
-                    >
-                      + Add Task
-                    </Button>
-                  </SectionHeader>
-                  <List>
-                    {tasks.map((task) => (
-                      <TaskItem key={task.id}>
-                        <ListItemIcon>
-                          <Checkbox
-                            checked={task.completed}
-                            onChange={() => handleToggleTask(task.id)}
-                            icon={<RadioButtonUnchecked />}
-                            checkedIcon={
-                              <CheckCircle sx={{ color: "#2ecc71" }} />
-                            }
-                          />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={task.text}
-                          primaryTypographyProps={{
-                            style: {
-                              textDecoration: task.completed
-                                ? "line-through"
-                                : "none",
-                              color: task.completed ? "#95a5a6" : "#2c3e50",
-                              fontWeight: 600,
-                            },
+                  <Typography
+                    variant="h4"
+                    fontWeight={800}
+                    sx={{
+                      color: "#000851",
+                      mb: 1,
+                      fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
+                    }}
+                  >
+                    Welcome Back! 👋
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{
+                      maxWidth: "600px",
+                      textAlign: "center",
+                      px: { xs: 2, md: 0 },
+                    }}
+                  >
+                    Elevate your productivity today! Here is an at-a-glance look
+                    at your progress and upcoming tasks.
+                  </Typography>
+                </Box>
+
+                <Grid
+                  container
+                  spacing={{ xs: 1, sm: 2 }}
+                  sx={{ mb: { xs: 3, md: 6 } }}
+                >
+                  {stats.map((stat, index) => (
+                    <Grid item xs={6} sm={6} md={3} key={index}>
+                      <StatCard gradient={stat.gradient}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            mb: 2,
                           }}
-                        />
-                        <Box sx={{ display: "flex", gap: 1 }}>
-                          <Button
-                            size="small"
-                            onClick={() => handleOpenEdit(task)}
-                            sx={{ color: "#1cb5e0", fontWeight: 600 }}
+                        >
+                          <Avatar
+                            sx={{
+                              bgcolor: "rgba(255,255,255,0.2)",
+                              color: "white",
+                              width: { xs: 32, sm: 40 },
+                              height: { xs: 32, sm: 40 },
+                            }}
                           >
-                            Edit
-                          </Button>
-                          <Button
-                            size="small"
-                            onClick={() => handleDeleteTask(task.id)}
-                            sx={{ color: "#e74c3c", fontWeight: 600 }}
-                          >
-                            Delete
-                          </Button>
+                            {stat.icon}
+                          </Avatar>
+                          <Box sx={{ textAlign: "right" }}>
+                            <Typography
+                              fontWeight={800}
+                              sx={{
+                                fontSize: {
+                                  xs: "1.25rem",
+                                  sm: "1.5rem",
+                                  md: "2.25rem",
+                                },
+                              }}
+                            >
+                              {stat.value}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                opacity: 0.8,
+                                fontWeight: 700,
+                                fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                              }}
+                            >
+                              {stat.label.toUpperCase()}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </TaskItem>
-                    ))}
-                  </List>
-                </Paper>
+                      </StatCard>
+                    </Grid>
+                  ))}
+                </Grid>
 
-                <Paper
-                  sx={{
-                    p: 4,
-                    borderRadius: 16,
-                    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <SectionHeader>
-                    <Typography variant="h6" fontWeight="800" color="#000851">
-                      Quick Links
-                    </Typography>
-                  </SectionHeader>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-                    <Button
-                      variant="contained"
-                      onClick={handleOpenAdd}
-                      sx={{ background: mainGradient, textTransform: "none" }}
-                    >
-                      Add New Task
-                    </Button>
-                    <Link to="/dashboard/users-table">
-                      <Button
-                        variant="contained"
-                        sx={{ bgcolor: "#2ecc71", textTransform: "none" }}
-                      >
-                        Manage Users
-                      </Button>
-                    </Link>
-                    <Link to="/dashboard/roles">
-                      <Button
-                        variant="contained"
+                <Grid container spacing={{ xs: 2, md: 4 }}>
+                  <Grid item xs={12} md={8}>
+                    <GlassPaper>
+                      <Box
                         sx={{
-                          bgcolor: "#e74c3c",
-                          textTransform: "none",
-                          flex: 1,
+                          display: "flex",
+                          flexDirection: { xs: "column", sm: "row" },
+                          justifyContent: "space-between",
+                          alignItems: { xs: "flex-start", sm: "center" },
+                          mb: 4,
+                          gap: { xs: 2, sm: 0 },
                         }}
                       >
-                        Manage Roles
-                      </Button>
-                    </Link>
-                  </Box>
-                </Paper>
-              </Grid>
+                        <Typography
+                          variant="h6"
+                          fontWeight={800}
+                          color="#000851"
+                          sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
+                        >
+                          Recent Tasks
+                        </Typography>
+                        <Button
+                          onClick={handleOpenAdd}
+                          variant="contained"
+                          startIcon={<AddIcon />}
+                          sx={{
+                            background: "#0f4dbeff",
+                            borderRadius: "12px",
+                            textTransform: "none",
+                            fontWeight: 700,
+                            px: { xs: 2, sm: 3 },
+                            fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                            boxShadow: "0 8px 16px rgba(28, 181, 224, 0.2)",
+                          }}
+                        >
+                          New Task
+                        </Button>
+                      </Box>
+                      <List disablePadding>
+                        {tasks.map((task) => (
+                          <ListItem
+                            key={task.id}
+                            sx={{
+                              mb: 1.5,
+                              borderRadius: "16px",
+                              bgcolor: alpha("#000851", 0.02),
+                              transition: "0.2s",
+                              "&:hover": { bgcolor: alpha("#000851", 0.05) },
+                              px: { xs: 1, sm: 2 },
+                            }}
+                          >
+                            <ListItemIcon sx={{ minWidth: { xs: 40, sm: 56 } }}>
+                              <Checkbox
+                                checked={task.completed}
+                                onChange={() => handleToggleTask(task.id)}
+                                icon={<RadioButtonUnchecked />}
+                                checkedIcon={
+                                  <CheckCircle sx={{ color: "#1CB5E0" }} />
+                                }
+                                size={isPhone ? "small" : "medium"}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={task.text}
+                              primaryTypographyProps={{
+                                fontWeight: 600,
+                                fontSize: { xs: "0.9rem", sm: "1rem" },
+                                style: {
+                                  textDecoration: task.completed
+                                    ? "line-through"
+                                    : "none",
+                                  color: task.completed
+                                    ? "text.disabled"
+                                    : "#2c3e50",
+                                },
+                              }}
+                            />
+                            <IconButton
+                              onClick={() => handleDeleteTask(task.id)}
+                              size={isPhone ? "small" : "medium"}
+                              sx={{ color: "#e74c3c" }}
+                            >
+                              <PriorityHigh
+                                fontSize={isPhone ? "small" : "medium"}
+                              />
+                            </IconButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </GlassPaper>
 
-              <Grid item xs={12} md={4}>
-                <Paper
-                  sx={{
-                    p: 3,
-                    borderRadius: 16,
-                    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 2,
-                    }}
-                  >
-                    <IconButton size="small" onClick={handlePrevMonth}>
-                      <ChevronLeft />
-                    </IconButton>
-                    <Typography fontWeight="800" color="#000851">
-                      {monthYear}
-                    </Typography>
-                    <IconButton size="small" onClick={handleNextMonth}>
-                      <ChevronRight />
-                    </IconButton>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(7, 1fr)",
-                      gap: 1,
-                      textAlign: "center",
-                    }}
-                  >
-                    {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
+                    <Box sx={{ mt: 4 }}>
                       <Typography
-                        key={d}
-                        variant="caption"
-                        fontWeight="900"
-                        color="#94a3b8"
+                        variant="h6"
+                        fontWeight={800}
+                        color="#000851"
+                        mb={3}
+                        sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
                       >
-                        {d}
+                        Quick Navigation
                       </Typography>
-                    ))}
-                    {calendarDays.map((day, index) => (
-                      <CalendarDay
-                        key={index}
-                        isToday={
-                          day === today.getDate() &&
-                          currentDate.getMonth() === today.getMonth()
-                        }
-                        isSelected={
-                          selectedDate &&
-                          day === selectedDate.getDate() &&
-                          currentDate.getMonth() === selectedDate.getMonth()
-                        }
-                        onClick={() => handleDateClick(day)}
+                      <Grid container spacing={2}>
+                        {[
+                          {
+                            label: "New Task",
+                            to: null,
+                            action: handleOpenAdd,
+                            icon: <AddIcon />,
+                            color:
+                              "linear-gradient(135deg, #1CB5E0 0%, #000851 100%)",
+                            visible: true,
+                          },
+                          {
+                            label: "Users",
+                            to: "/dashboard/users-table",
+                            action: null,
+                            icon: <GroupIcon />,
+                            color:
+                              "linear-gradient(135deg, #00B4DB 0%, #0083B0 100%)",
+                            visible: true,
+                          },
+                          {
+                            label: "Roles",
+                            to: "/dashboard/roles",
+                            action: null,
+                            icon: <SecurityIcon />,
+                            color:
+                              "linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)",
+                            visible: true,
+                          },
+                        ]
+                          .filter((link) => link.visible)
+                          .map((link, i) => (
+                            <Grid item xs={12} sm={6} md={4} key={i}>
+                              <Card
+                                onClick={
+                                  link.action
+                                    ? link.action
+                                    : () => navigate(link.to)
+                                }
+                                sx={{
+                                  p: { xs: 2, md: 2.5 },
+                                  borderRadius: "20px",
+                                  cursor: "pointer",
+                                  background: "rgba(255,255,255,0.7)",
+                                  backdropFilter: "blur(10px)",
+                                  border: "1px solid rgba(255,255,255,0.3)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: { xs: 1.5, md: 2 },
+                                  transition: "all 0.3s ease",
+                                  "&:hover": {
+                                    transform: "translateY(-4px)",
+                                    boxShadow:
+                                      "0 12px 24px rgba(0, 8, 81, 0.1)",
+                                    background: "#fff",
+                                    "& .link-icon": {
+                                      background: link.color,
+                                      color: "#fff",
+                                    },
+                                  },
+                                }}
+                              >
+                                <Avatar
+                                  className="link-icon"
+                                  sx={{
+                                    bgcolor: alpha("#1CB5E0", 0.1),
+                                    color: "#1CB5E0",
+                                    width: { xs: 38, md: 45 },
+                                    height: { xs: 38, md: 45 },
+                                    transition: "all 0.3s ease",
+                                  }}
+                                >
+                                  {link.icon}
+                                </Avatar>
+                                <Typography
+                                  fontWeight={700}
+                                  color="#000851"
+                                  sx={{
+                                    fontSize: { xs: "0.9rem", sm: "1rem" },
+                                  }}
+                                >
+                                  {link.label}
+                                </Typography>
+                              </Card>
+                            </Grid>
+                          ))}
+                      </Grid>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <GlassPaper>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 3,
+                        }}
                       >
-                        {day || ""}
-                      </CalendarDay>
-                    ))}
-                  </Box>
-                </Paper>
-              </Grid>
-            </Grid>
-          </>
-        ) : (
-          <Outlet />
-        )}
+                        <IconButton
+                          onClick={() =>
+                            setCurrentDate(
+                              new Date(
+                                currentDate.getFullYear(),
+                                currentDate.getMonth() - 1,
+                                1,
+                              ),
+                            )
+                          }
+                          size={isPhone ? "small" : "medium"}
+                        >
+                          <ChevronLeft />
+                        </IconButton>
+                        <Typography
+                          fontWeight={800}
+                          color="#000851"
+                          sx={{ fontSize: { xs: "1rem", sm: "1.25rem" } }}
+                        >
+                          {monthYear}
+                        </Typography>
+                        <IconButton
+                          onClick={() =>
+                            setCurrentDate(
+                              new Date(
+                                currentDate.getFullYear(),
+                                currentDate.getMonth() + 1,
+                                1,
+                              ),
+                            )
+                          }
+                          size={isPhone ? "small" : "medium"}
+                        >
+                          <ChevronRight />
+                        </IconButton>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(7, 1fr)",
+                          gap: 1,
+                        }}
+                      >
+                        {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
+                          <Typography
+                            key={d}
+                            variant="caption"
+                            fontWeight={900}
+                            color="text.disabled"
+                            textAlign="center"
+                            sx={{ fontSize: { xs: "0.7rem", sm: "0.75rem" } }}
+                          >
+                            {d}
+                          </Typography>
+                        ))}
+                        {calendarDays.map((day, i) => (
+                          <CalendarDay
+                            key={i}
+                            isToday={
+                              day === today.getDate() &&
+                              currentDate.getMonth() === today.getMonth()
+                            }
+                            isSelected={
+                              selectedDate && day === selectedDate.getDate()
+                            }
+                            onClick={() =>
+                              day &&
+                              setSelectedDate(
+                                new Date(
+                                  currentDate.getFullYear(),
+                                  currentDate.getMonth(),
+                                  day,
+                                ),
+                              )
+                            }
+                            sx={{
+                              width: { xs: "32px", sm: "36px" },
+                              height: { xs: "32px", sm: "36px" },
+                              fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                            }}
+                          >
+                            {day || ""}
+                          </CalendarDay>
+                        ))}
+                      </Box>
+                    </GlassPaper>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Fade>
+          ) : (
+            <Outlet />
+          )}
+        </Box>
       </Box>
 
       <Dialog
         open={openDialog}
-        onClose={handleCloseDialog}
-        PaperProps={{ sx: { borderRadius: 16 } }}
+        onClose={() => setOpenDialog(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: "24px",
+            p: 2,
+            minWidth: { xs: "280px", sm: "320px" },
+          },
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 800 }}>
-          {editingTask ? "Update Task" : "New Task"}
+        <DialogTitle
+          sx={{ fontWeight: 800, fontSize: { xs: "1.25rem", sm: "1.5rem" } }}
+        >
+          Add New Task
         </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             fullWidth
+            placeholder="What needs to be done?"
             variant="standard"
             sx={{ mt: 1 }}
+            InputProps={{
+              disableUnderline: true,
+              sx: { bgcolor: "#f8faff", p: 2, borderRadius: "12px" },
+            }}
             value={taskInput}
             onChange={(e) => setTaskInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleSaveTask()}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog} color="inherit">
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 2,
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 1, sm: 0 },
+          }}
+        >
+          <Button
+            onClick={() => setOpenDialog(false)}
+            color="inherit"
+            sx={{ fontWeight: 700, width: { xs: "100%", sm: "auto" } }}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={handleSaveTask}
-            sx={{ background: mainGradient }}
+            sx={{
+              background: "#0f4dbeff",
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: 700,
+              px: { xs: 2, sm: 3 },
+              fontSize: { xs: "0.8rem", sm: "0.9rem" },
+              boxShadow: "0 8px 16px rgba(28, 181, 224, 0.2)",
+            }}
           >
-            Save
+            Save Task
           </Button>
         </DialogActions>
       </Dialog>
